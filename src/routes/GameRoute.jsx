@@ -237,6 +237,9 @@ const GameRoute = () => {
                         Item
                     </button>
                     <button>Defend</button>
+                    <button onClick={() => spawnMonster('GORIYA')}>
+                        Spawn Goriya
+                    </button>
                 </>
             );
             break;
@@ -302,12 +305,19 @@ const GameRoute = () => {
         // </div>
         <div id="page-container">
             <div id="main">
-                <div id="monsters">
-                    {Object.keys(dungeon?.monsters ?? {}).map((key) => (
-                        <button className="monster" onClick={() => {handleCommand("ENEMY", key)}} disabled={!selectedAction || !actionType}>
-                            {dungeon?.monsters?.[key]?.name} {dungeon?.monsters?.[key]?.hp}/{dungeon?.monsters?.[key]?.maxHp}
-                        </button>
-                    ))}
+                <div id="top-panel">
+                    <div style={{position: "absolute", height: "100%", width: "100%", top: "0px", left: "0px"}}>
+                        <img id="background-front" alt="background" src={`${process.env.PUBLIC_URL}/Grassland-front.png`} />
+                        <img id="background-back" alt="background" src={`${process.env.PUBLIC_URL}/Grassland-back.png`} />
+                    </div>
+                    <div id="monsters">
+                        {Object.keys(dungeon?.monsters ?? {}).map((key) => (
+                            <button className="monster" onClick={() => {handleCommand("ENEMY", key)}} disabled={!selectedAction || !actionType}>
+                                <img className="enemy-image" alt="enemy" src={dungeon?.monsters?.[key]?.imageUrl || `${process.env.PUBLIC_URL}/slime.webp`} />
+                                <div style={{color: "white", fontWeight: "bolder"}}>{dungeon?.monsters?.[key]?.name} {dungeon?.monsters?.[key]?.hp}/{dungeon?.monsters?.[key]?.maxHp}</div>
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <div id="player">
                     <div id="actions-menu">
