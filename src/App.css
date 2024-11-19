@@ -126,6 +126,17 @@
     cursor: pointer;
 }
 
+.monster .enemy-arrow {
+    width: 25px;
+    height: 25px;
+    visibility: hidden;
+}
+
+.monster:hover .enemy-arrow, .monster.selected .enemy-arrow {
+    visibility: visible;
+    opacity: 100%;
+}
+
 button {
     cursor: pointer;
 }
@@ -157,8 +168,26 @@ button {
 
 #actions-menu button, #player-stats button {
     border: none;
+    background-color: transparent;
     text-align: left;
-    padding: 10px;
+    color: white;
+    font-size: 1.2rem;
+}
+
+#actions-menu div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#actions-menu div > img {
+    visibility: hidden;
+    width: 25px;
+}
+
+#actions-menu div:hover > img {
+    visibility: visible;
+    width: 25px;
 }
 
 #player-stats {
@@ -172,4 +201,8 @@ button {
     font-size: 1.2rem;
     font-weight: bolder;
     overflow-y: scroll;
+}
+
+#player-stats button:hover {
+    color: yellow;
 }

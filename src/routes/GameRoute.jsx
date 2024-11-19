@@ -65,7 +65,6 @@ const getAbilityText = (ability) => {
 const SELECT_ACTION = "START";
 const SELECT_ABILITY = "SELECT_ABILITY";
 const SELECT_ITEM = "SELECT_ITEM";
-const SELECT_TARGET = "SELECT_TARGET";
 
 const ACTION_TYPE_ATTACK = "ATTACK";
 const ACTION_TYPE_ABILITY = "ABILITY";
@@ -96,6 +95,7 @@ const GameRoute = () => {
                     actor: playerData.name,
                     target,
                     jwtToken: jwt,
+                    accessToken: localStorage.getItem('accessToken')
                 },
             })
         );
@@ -114,6 +114,7 @@ const GameRoute = () => {
                     argument: ability,
                 },
                 jwtToken: jwt,
+                accessToken: localStorage.getItem('accessToken')
             })
         );
     };
@@ -129,6 +130,7 @@ const GameRoute = () => {
                     actor: monster,
                 },
                 jwtToken: jwt,
+                accessToken: localStorage.getItem('accessToken')
             })
         );
     };
@@ -149,6 +151,7 @@ const GameRoute = () => {
                     userType: 'PLAYER',
                     channelId,
                     jwtToken: jwt,
+                    accessToken: localStorage.getItem('accessToken')
                 })
             );
         };
@@ -224,22 +227,37 @@ const GameRoute = () => {
         case SELECT_ACTION:
             component = (
                 <>
-                    <button title="Attack a enemy" onClick={() => {
-                        setActionType(ACTION_TYPE_ATTACK);
-                        setSelectedAction(ACTION_TYPE_ATTACK);
-                    }}>
-                        Attack
-                    </button>
-                    <button title="Use an ability" onClick={() => setTurnState(SELECT_ABILITY)}>
-                        Ability
-                    </button>
-                    <button title="Use an item" onClick={() => setTurnState(SELECT_ITEM)}>
-                        Item
-                    </button>
-                    <button>Defend</button>
-                    <button onClick={() => spawnMonster('GORIYA')}>
-                        Spawn Goriya
-                    </button>
+                    <div>
+                        <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                        <button title="Attack a enemy" onClick={() => {
+                            setActionType(ACTION_TYPE_ATTACK);
+                            setSelectedAction(ACTION_TYPE_ATTACK);
+                        }}>
+                            Attack
+                        </button>
+                    </div>
+                    <div>
+                        <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                        <button title="Use an ability" onClick={() => setTurnState(SELECT_ABILITY)}>
+                            Ability
+                        </button>
+                    </div>
+                    <div>
+                        <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                        <button title="Use an item" onClick={() => setTurnState(SELECT_ITEM)}>
+                            Item
+                        </button>
+                    </div>
+                    <div>
+                        <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                        <button>Defend</button>
+                    </div>
+                    <div>
+                        <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                        <button onClick={() => spawnMonster('GORIYA')}>
+                            Spawn Goriya
+                        </button>
+                    </div>
                 </>
             );
             break;
@@ -250,15 +268,18 @@ const GameRoute = () => {
                         &lt;- Back
                     </button>
                     {Object.keys(playerData?.abilities).map((key) => (
-                        <button
-                            title={playerData?.abilities[key].description}
-                            onClick={() => {
-                                setActionType(ACTION_TYPE_ABILITY);
-                                setSelectedAction(key);
-                            }}
-                        >
-                            {playerData?.abilities[key].name}
-                        </button>
+                        <div>
+                            <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                            <button
+                                title={playerData?.abilities[key].description}
+                                onClick={() => {
+                                    setActionType(ACTION_TYPE_ABILITY);
+                                    setSelectedAction(key);
+                                }}
+                            >
+                                {playerData?.abilities[key].name}
+                            </button>
+                        </div>
                     ))}
                 </>
             );
@@ -273,10 +294,13 @@ const GameRoute = () => {
                         .filter(({ type }) => type === 'consumable')
                         .map(({ name }) => (
                             <>
-                                <button onClick={() => {
-                                    setActionType(ACTION_TYPE_ITEM);
-                                    setSelectedAction(name);
-                                }}>{name}</button>
+                                <div>
+                                    <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                                    <button onClick={() => {
+                                        setActionType(ACTION_TYPE_ITEM);
+                                        setSelectedAction(name);
+                                    }}>{name}</button>
+                                </div>
                             </>
                     ))}
                 </>
@@ -313,6 +337,7 @@ const GameRoute = () => {
                     <div id="monsters">
                         {Object.keys(dungeon?.monsters ?? {}).map((key) => (
                             <button className="monster" onClick={() => {handleCommand("ENEMY", key)}} disabled={!selectedAction || !actionType}>
+                                <img className="enemy-arrow" alt="enemy selection arrow" src={`${process.env.PUBLIC_URL}/green-down-arrow.png`} />
                                 <img className="enemy-image" alt="enemy" src={dungeon?.monsters?.[key]?.imageUrl || `${process.env.PUBLIC_URL}/slime.webp`} />
                                 <div style={{color: "white", fontWeight: "bolder"}}>{dungeon?.monsters?.[key]?.name} {dungeon?.monsters?.[key]?.hp}/{dungeon?.monsters?.[key]?.maxHp}</div>
                             </button>
