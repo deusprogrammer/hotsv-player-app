@@ -62,6 +62,15 @@ const getAbilityText = (ability) => {
     return message;
 };
 
+const SELECT_ACTION = "START";
+const SELECT_ABILITY = "SELECT_ABILITY";
+const SELECT_ITEM = "SELECT_ITEM";
+const SELECT_TARGET = "SELECT_TARGET";
+
+const ACTION_TYPE_ATTACK = "ATTACK";
+const ACTION_TYPE_ABILITY = "ABILITY";
+const ACTION_TYPE_ITEM = "ITEM";
+
 const GameRoute = () => {
     const [jwt, setJwt] = useState('');
     const [playerData, setPlayerData] = useState(null);
@@ -69,6 +78,11 @@ const GameRoute = () => {
     const [dungeon, setDungeon] = useState(null);
     const [target, setTarget] = useState('');
     const {channelId} = useParams();
+
+    const [actionType, setActionType] = useState();
+    const [selectedAction, setSelectedAction] = useState();
+    const [turnState, setTurnState] = useState(SELECT_ACTION);
+
     const websocket = useRef();
 
     const attack = () => {
@@ -118,6 +132,10 @@ const GameRoute = () => {
             })
         );
     };
+
+    const handleCommand = (targetType, target) => {
+
+    }
 
     const connect = (jwt) => {
         const ws = new W3CWebSocket(config.WS_URL);
@@ -201,130 +219,106 @@ const GameRoute = () => {
         return <>Loading</>;
     }
 
-    return (
-        <div>
-            <h2>Player Info</h2>
-            <table className="player-info">
-                <tbody>
-                    <tr>
-                        <td>Player Name</td>
-                        <td>{playerData?.name || 'N/A'}</td>
-                    </tr>
-                    <tr>
-                        <td>HP</td>
-                        <td>
-                            {playerData?.hp}/{playerData?.maxHp}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>AP</td>
-                        <td>{playerData?.ap}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <h2>Abilities</h2>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '800px',
-                    marginLeft: '10px',
-                }}
-            >
-                <div
-                    style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '10px',
-                    }}
-                >
-                    <button title="Attack a enemy" onClick={attack}>
+    let component;
+    switch (turnState) {
+        case SELECT_ACTION:
+            component = (
+                <>
+                    <button title="Attack a enemy" onClick={() => {
+                        setActionType(ACTION_TYPE_ATTACK);
+                        setSelectedAction(ACTION_TYPE_ATTACK);
+                    }}>
                         Attack
                     </button>
-                    <span>
-                        Deal {playerData?.equipment?.hand?.dmg}{' '}
-                        {playerData?.equipment?.hand?.dmgStat} damage to a
-                        hostile
-                    </span>
-                </div>
-                {Object.keys(playerData?.abilities).map((key) => (
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '10px',
-                        }}
-                        key={key}
-                    >
+                    <button title="Use an ability" onClick={() => setTurnState(SELECT_ABILITY)}>
+                        Ability
+                    </button>
+                    <button title="Use an item" onClick={() => setTurnState(SELECT_ITEM)}>
+                        Item
+                    </button>
+                    <button>Defend</button>
+                </>
+            );
+            break;
+        case SELECT_ABILITY:
+            component = (
+                <>
+                    <button onClick={() => setTurnState(SELECT_ACTION)}>
+                        &lt;- Back
+                    </button>
+                    {Object.keys(playerData?.abilities).map((key) => (
                         <button
                             title={playerData?.abilities[key].description}
                             onClick={() => {
-                                ability(key);
+                                setActionType(ACTION_TYPE_ABILITY);
+                                setSelectedAction(key);
                             }}
                         >
                             {playerData?.abilities[key].name}
                         </button>
-                        <span>
-                            {getAbilityText(playerData?.abilities[key])}
-                        </span>
-                    </div>
-                ))}
-            </div>
-            <h2>Items</h2>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '200px',
-                    marginLeft: '10px',
-                }}
-            >
-                {playerData?.inventory
-                    .filter(({ type }) => type === 'consumable')
-                    .map(({ name }) => (
-                        <>
-                            <button>{name}</button>
-                        </>
                     ))}
-            </div>
-            <h2>Players</h2>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '200px',
-                    marginLeft: '10px',
-                }}
-            >
-                {Object.keys(dungeon?.players ?? {}).map((key) => (
-                    <div>{dungeon?.players?.[key]?.name} {dungeon?.players?.[key]?.hp}/{dungeon?.players?.[key]?.maxHp}</div>
-                ))}
-            </div>
-            <h2>Monsters</h2>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '200px',
-                    marginLeft: '10px',
-                }}
-            >
-                {Object.keys(dungeon?.monsters ?? {}).map((key) => (
-                    <button>{dungeon?.monsters?.[key]?.name} {dungeon?.monsters?.[key]?.hp}/{dungeon?.monsters?.[key]?.maxHp}</button>
-                ))}
-            </div>
-            <h2>Test Options</h2>
-            <div
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    width: '200px',
-                    marginLeft: '10px',
-                }}
-            >
-                <button onClick={() => spawnMonster('GORIYA')}>
-                    Spawn Goriya
-                </button>
+                </>
+            );
+            break;
+        case SELECT_ITEM:
+            component = (
+                <>
+                    <button onClick={() => setTurnState(SELECT_ACTION)}>
+                        &lt;- Back
+                    </button>
+                    {playerData?.inventory
+                        .filter(({ type }) => type === 'consumable')
+                        .map(({ name }) => (
+                            <>
+                                <button onClick={() => {
+                                    setActionType(ACTION_TYPE_ITEM);
+                                    setSelectedAction(name);
+                                }}>{name}</button>
+                            </>
+                    ))}
+                </>
+            );
+            break;
+        default:
+            component = <></>;
+            break;
+    }
+
+    return (
+        // <div>
+        //     <h2>Test Options</h2>
+        //     <div
+        //         style={{
+        //             display: 'flex',
+        //             flexDirection: 'column',
+        //             width: '200px',
+        //             marginLeft: '10px',
+        //         }}
+        //     >
+        //         <button onClick={() => spawnMonster('GORIYA')}>
+        //             Spawn Goriya
+        //         </button>
+        //     </div>
+        // </div>
+        <div id="page-container">
+            <div id="main">
+                <div id="monsters">
+                    {Object.keys(dungeon?.monsters ?? {}).map((key) => (
+                        <button className="monster" onClick={() => {handleCommand("ENEMY", key)}} disabled={!selectedAction || !actionType}>
+                            {dungeon?.monsters?.[key]?.name} {dungeon?.monsters?.[key]?.hp}/{dungeon?.monsters?.[key]?.maxHp}
+                        </button>
+                    ))}
+                </div>
+                <div id="player">
+                    <div id="actions-menu">
+                        {component}
+                    </div>
+                    <div id="player-stats">
+                        {Object.keys(dungeon?.players ?? {}).map((key) => (
+                            <button onClick={() => {handleCommand("PLAYER", key)}}>{dungeon?.players?.[key]?.name} {Math.min(dungeon?.players?.[key]?.hp, dungeon?.players?.[key]?.maxHp)}/{dungeon?.players?.[key]?.maxHp}</button>
+                        ))}
+                    </div>
+                </div>
             </div>
         </div>
     );
