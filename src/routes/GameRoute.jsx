@@ -94,8 +94,7 @@ const GameRoute = () => {
                     type: 'ATTACK',
                     actor: playerData.name,
                     target,
-                    jwtToken: jwt,
-                    accessToken: localStorage.getItem('accessToken')
+                    jwtToken: jwt
                 },
             })
         );
@@ -113,8 +112,7 @@ const GameRoute = () => {
                     target,
                     argument: ability,
                 },
-                jwtToken: jwt,
-                accessToken: localStorage.getItem('accessToken')
+                jwtToken: jwt
             })
         );
     };
@@ -129,8 +127,7 @@ const GameRoute = () => {
                     type: 'SPAWN_MONSTER',
                     actor: monster,
                 },
-                jwtToken: jwt,
-                accessToken: localStorage.getItem('accessToken')
+                jwtToken: jwt
             })
         );
     };
@@ -142,7 +139,7 @@ const GameRoute = () => {
     const connect = (jwt) => {
         const ws = new W3CWebSocket(config.WS_URL);
 
-        //Register battle panel
+        //Register player
         ws.onopen = () => {
             console.log('WEB SOCKET OPENED');
             ws.send(
@@ -150,8 +147,7 @@ const GameRoute = () => {
                     event: 'JOIN',
                     userType: 'PLAYER',
                     channelId,
-                    jwtToken: jwt,
-                    accessToken: localStorage.getItem('accessToken')
+                    jwtToken: jwt
                 })
             );
         };
