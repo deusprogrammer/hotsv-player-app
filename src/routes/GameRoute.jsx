@@ -79,6 +79,8 @@ const GameRoute = () => {
     const {channelId} = useParams();
 
     const [actionType, setActionType] = useState();
+    const [actionArea, setActionArea] = useState();
+    const [actionTarget, setActionTarget] = useState();
     const [selectedAction, setSelectedAction] = useState();
     const [turnState, setTurnState] = useState(SELECT_ACTION);
 
@@ -219,11 +221,17 @@ const GameRoute = () => {
         case SELECT_ACTION:
             component = (
                 <>
-                    <div>
+                    <div className={`ability${selectedAction === ACTION_TYPE_ATTACK ? ' selected' : ''}`}>
                         <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
                         <button title="Attack a enemy" onClick={() => {
                             setActionType(ACTION_TYPE_ATTACK);
+                            setActionArea("ONE");
+                            setActionTarget("ANY");
                             setSelectedAction(ACTION_TYPE_ATTACK);
+
+                            if (targets.length > 1) {
+                                setTargets([]);
+                            }
                         }}>
                             Attack
                         </button>
@@ -239,10 +247,6 @@ const GameRoute = () => {
                         <button title="Use an item" onClick={() => setTurnState(SELECT_ITEM)}>
                             Item
                         </button>
-                    </div>
-                    <div>
-                        <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
-                        <button>Defend</button>
                     </div>
                     <div>
                         <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
@@ -265,8 +269,18 @@ const GameRoute = () => {
                             <button
                                 title={playerData?.abilities[key].description}
                                 onClick={() => {
+                                    if (actionTarget !== playerData?.abilities[key].target && playerData?.abilities[key].target !== "ANY") {
+                                        setTargets([]);
+                                    }
+
                                     setActionType(ACTION_TYPE_ABILITY);
+                                    setActionTarget(playerData?.abilities[key].target);
+                                    setActionArea(playerData?.abilities[key].area);
                                     setSelectedAction(key);
+
+                                    if (playerData?.abilities[key].area !== "ALL" && targets.length > 1) {
+                                        setTargets([]);
+                                    }
 
                                     if (playerData?.abilities[key].target === "ENEMY" && playerData?.abilities[key].area === "ALL") {
                                         setTargets(Object.keys(dungeon?.monsters));
@@ -310,21 +324,6 @@ const GameRoute = () => {
     }
 
     return (
-        // <div>
-        //     <h2>Test Options</h2>
-        //     <div
-        //         style={{
-        //             display: 'flex',
-        //             flexDirection: 'column',
-        //             width: '200px',
-        //             marginLeft: '10px',
-        //         }}
-        //     >
-        //         <button onClick={() => spawnMonster('GORIYA')}>
-        //             Spawn Goriya
-        //         </button>
-        //     </div>
-        // </div>
         <div id="page-container">
             <div id="main">
                 <div id="top-panel">
@@ -334,7 +333,21 @@ const GameRoute = () => {
                     </div>
                     <div id="monsters">
                         {Object.keys(dungeon?.monsters ?? {}).map((key) => (
-                            <button className={`monster${targets.includes(key) ? ' selected' : ''}`} onClick={() => {setTargets([key])}}>
+                            <button className={`monster${targets.includes(key) ? ' selected' : ''}`} onClick={() => {
+                                if (actionTarget === "CHAT") {
+                                    setSelectedAction(null);
+                                    setActionArea(null);
+                                    setActionTarget(null);
+                                    setTargets([key]);
+                                    return;
+                                }
+                                
+                                setTargets([key]);
+
+                                if (actionArea === "ALL") {
+                                    setTargets([...dungeon?.monsters]);
+                                }
+                            }}>
                                 <img className="enemy-arrow" alt="enemy selection arrow" src={`${process.env.PUBLIC_URL}/green-down-arrow.png`} />
                                 <img className="enemy-image" alt="enemy" src={dungeon?.monsters?.[key]?.imageUrl || `${process.env.PUBLIC_URL}/slime.webp`} />
                                 <div style={{color: "white", fontWeight: "bolder"}}>{dungeon?.monsters?.[key]?.name} {dungeon?.monsters?.[key]?.hp}/{dungeon?.monsters?.[key]?.maxHp}</div>
@@ -350,7 +363,21 @@ const GameRoute = () => {
                         {Object.keys(dungeon?.players ?? {}).map((key) => (
                             <div className={`player${targets.includes(key) ? ' selected' : ''}`}>
                                 <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
-                                <button onClick={() => {}}>{dungeon?.players?.[key]?.name} {Math.min(dungeon?.players?.[key]?.hp, dungeon?.players?.[key]?.maxHp)}/{dungeon?.players?.[key]?.maxHp}</button>
+                                <button onClick={() => {
+                                    if (actionTarget === "ENEMY") {
+                                        setSelectedAction(null);
+                                        setActionArea(null);
+                                        setActionTarget(null);
+                                        setTargets([key]);
+                                        return;
+                                    }
+
+                                    setTargets([key]);
+
+                                    if (actionArea === "ALL") {
+                                        setTargets([...dungeon?.players]);
+                                    }
+                                }}>{dungeon?.players?.[key]?.name} {Math.min(dungeon?.players?.[key]?.hp, dungeon?.players?.[key]?.maxHp)}/{dungeon?.players?.[key]?.maxHp}</button>
                             </div>
                         ))}
                     </div>
