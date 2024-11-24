@@ -123,6 +123,10 @@
     visibility: hidden;
 }
 
+.monster.selected * {
+    opacity: 100% !important;
+}
+
 .monster:hover .enemy-arrow, .monster.selected .enemy-arrow {
     visibility: visible;
     opacity: 100%;
@@ -183,6 +187,20 @@ button {
 #actions-menu div:hover > img {
     visibility: visible;
     width: 25px;
+}
+
+.player > img { 
+    visibility: hidden;
+    width: 25px;
+}
+
+.player:hover > img, .player.selected > img {
+    visibility: visible;
+    width: 25px;
+}
+
+.ability.selected img {
+    visibility: visible !important;
 }
 
 #player-stats {

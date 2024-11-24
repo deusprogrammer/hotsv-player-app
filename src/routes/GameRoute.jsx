@@ -75,7 +75,7 @@ const GameRoute = () => {
     const [playerData, setPlayerData] = useState(null);
     const [gameContext, setGameContext] = useState({});
     const [dungeon, setDungeon] = useState(null);
-    const [target, setTarget] = useState('');
+    const [targets, setTargets] = useState([]);
     const {channelId} = useParams();
 
     const [actionType, setActionType] = useState();
@@ -93,7 +93,7 @@ const GameRoute = () => {
                 action: {
                     type: 'ATTACK',
                     actor: playerData.name,
-                    target,
+                    targets,
                     jwtToken: jwt
                 },
             })
@@ -109,7 +109,7 @@ const GameRoute = () => {
                 action: {
                     type: 'USE',
                     actor: playerData.name,
-                    target,
+                    targets,
                     argument: ability,
                 },
                 jwtToken: jwt
@@ -131,10 +131,6 @@ const GameRoute = () => {
             })
         );
     };
-
-    const handleCommand = (targetType, target) => {
-
-    }
 
     const connect = (jwt) => {
         const ws = new W3CWebSocket(config.WS_URL);
@@ -264,13 +260,19 @@ const GameRoute = () => {
                         &lt;- Back
                     </button>
                     {Object.keys(playerData?.abilities).map((key) => (
-                        <div>
+                        <div className={`ability${actionType === ACTION_TYPE_ABILITY && selectedAction === key ? ' selected' : ''}`}>
                             <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
                             <button
                                 title={playerData?.abilities[key].description}
                                 onClick={() => {
                                     setActionType(ACTION_TYPE_ABILITY);
                                     setSelectedAction(key);
+
+                                    if (playerData?.abilities[key].target === "ENEMY" && playerData?.abilities[key].area === "ALL") {
+                                        setTargets(Object.keys(dungeon?.monsters));
+                                    } else if (playerData?.abilities[key].target === "CHAT" && playerData?.abilities[key].area === "ALL") {
+                                        setTargets(Object.keys(dungeon?.players));
+                                    }
                                 }}
                             >
                                 {playerData?.abilities[key].name}
@@ -332,7 +334,7 @@ const GameRoute = () => {
                     </div>
                     <div id="monsters">
                         {Object.keys(dungeon?.monsters ?? {}).map((key) => (
-                            <button className="monster" onClick={() => {handleCommand("ENEMY", key)}} disabled={!selectedAction || !actionType}>
+                            <button className={`monster${targets.includes(key) ? ' selected' : ''}`} onClick={() => {setTargets([key])}}>
                                 <img className="enemy-arrow" alt="enemy selection arrow" src={`${process.env.PUBLIC_URL}/green-down-arrow.png`} />
                                 <img className="enemy-image" alt="enemy" src={dungeon?.monsters?.[key]?.imageUrl || `${process.env.PUBLIC_URL}/slime.webp`} />
                                 <div style={{color: "white", fontWeight: "bolder"}}>{dungeon?.monsters?.[key]?.name} {dungeon?.monsters?.[key]?.hp}/{dungeon?.monsters?.[key]?.maxHp}</div>
@@ -346,7 +348,10 @@ const GameRoute = () => {
                     </div>
                     <div id="player-stats">
                         {Object.keys(dungeon?.players ?? {}).map((key) => (
-                            <button onClick={() => {handleCommand("PLAYER", key)}}>{dungeon?.players?.[key]?.name} {Math.min(dungeon?.players?.[key]?.hp, dungeon?.players?.[key]?.maxHp)}/{dungeon?.players?.[key]?.maxHp}</button>
+                            <div className={`player${targets.includes(key) ? ' selected' : ''}`}>
+                                <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                                <button onClick={() => {}}>{dungeon?.players?.[key]?.name} {Math.min(dungeon?.players?.[key]?.hp, dungeon?.players?.[key]?.maxHp)}/{dungeon?.players?.[key]?.maxHp}</button>
+                            </div>
                         ))}
                     </div>
                 </div>
