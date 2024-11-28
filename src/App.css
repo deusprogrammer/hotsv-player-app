@@ -189,6 +189,12 @@ button {
     width: 25px;
 }
 
+.player {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
 .player > img { 
     visibility: hidden;
     width: 25px;
