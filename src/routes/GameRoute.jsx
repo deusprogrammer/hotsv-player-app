@@ -5,10 +5,11 @@ import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import AbilityPreview from '../components/AbilityPreview';
 import MonsterPreview from '../components/MonsterPreview';
 import PlayerMenuEntry from '../components/PlayerMenuEntry';
-import Monster from '../components/Monster';
 import Menu from '../components/Menu';
 import BattleBackground from '../components/BattleBackground';
 import Monsters from '../components/Monsters';
+import InfoBox from '../components/InfoBox';
+import { randomUuid } from '../utils';
 
 const config = {
     BASE_URL: 'https://deusprogrammer.com/api/twitch',
@@ -17,6 +18,7 @@ const config = {
 
 const GameRoute = () => {
     const [jwt, setJwt] = useState('');
+    const [infoBoxTexts, setInfoBoxTexts] = useState([]);
     const [playerData, setPlayerData] = useState(null);
     const [abilityHover, setAbilityHover] = useState(null);
     const [monsterHover, setMonsterHover] = useState(null);
@@ -28,6 +30,7 @@ const GameRoute = () => {
     const [actionType, setActionType] = useState();
     const [actionArea, setActionArea] = useState();
     const [actionTarget, setActionTarget] = useState();
+    const [targetType, setTargetType] = useState();
     const [selectedAction, setSelectedAction] = useState();
 
     const websocket = useRef();
@@ -42,9 +45,15 @@ const GameRoute = () => {
                     action: {
                         type: 'ATTACK',
                         actor: playerData.name,
-                        targets,
-                        jwtToken: jwt
+                        targets: targets.map((key) => {
+                            if (targetType === "MONSTER") {
+                                return `~${key}`;
+                            }
+
+                            return key;
+                        })
                     },
+                    jwtToken: jwt
                 })
             );
         },
@@ -57,7 +66,13 @@ const GameRoute = () => {
                     action: {
                         type: 'USE',
                         actor: playerData.name,
-                        targets,
+                        targets: targets.map((key) => {
+                            if (targetType === "MONSTER") {
+                                return `~${key}`;
+                            }
+
+                            return key;
+                        }),
                         argument: ability,
                     },
                     jwtToken: jwt
@@ -73,7 +88,13 @@ const GameRoute = () => {
                     action: {
                         type: 'USE',
                         actor: playerData.name,
-                        targets,
+                        targets: targets.map((key) => {
+                            if (targetType === "MONSTER") {
+                                return `~${key}`;
+                            }
+
+                            return key;
+                        }),
                         argument: item,
                     },
                     jwtToken: jwt
@@ -115,13 +136,14 @@ const GameRoute = () => {
 
         ws.onmessage = (message) => {
             console.log('MESSAGE: ' + message.data);
-            const { event, playerData: newPlayerData, gameContext: newGameContext, dungeon: newDungeon } = JSON.parse(
+            const { event, playerData: newPlayerData, gameContext: newGameContext, dungeon: newDungeon, messages } = JSON.parse(
                 message.data
             );
 
             switch (event) {
                 case 'JOINED':
                     if (newPlayerData) {
+                        openInfoBox(`${newPlayerData.name} joined`, 3000);
                         setPlayerData(newPlayerData);
                     }
                     if (newGameContext) {
@@ -132,6 +154,9 @@ const GameRoute = () => {
                 case 'UPDATE':
                     console.log("UPDATE MESSAGE RECEIVED");
                     console.log("DUNGEON: " + JSON.stringify(newDungeon, null, 5));
+                    newDungeon.messages?.forEach((message) => {
+                        openInfoBox(message, 1000);
+                    });
                     setDungeon(newDungeon);
                     break;
                 default:
@@ -151,6 +176,43 @@ const GameRoute = () => {
         websocket.current = ws;
     };
 
+    const getConfirmationText = () => {
+        let verb = "Perform";
+        let targetName = "";
+        let actionName = "";
+    
+        console.log("Targets: " + JSON.stringify(targets));
+    
+        if (targets.length > 1) {
+            if (targetType === "MONSTER") {
+                targetName = "all enemies";
+            } else if (targetType === "PLAYER") {
+                targetName = "all players";
+            }
+        } else {
+            if (targetType === "MONSTER") {
+                targetName = dungeon.monsters[targets[0]]?.name;
+            } else if (targetType === "PLAYER") {
+                targetName = dungeon.players[targets[0]]?.name;
+            }
+        }
+    
+        if (selectedAction === "ATTACK") {
+            actionName = "attack";
+        } else {
+            if (actionType === "ITEM") {
+                verb = "Use";
+                actionName = gameContext.itemTable[selectedAction]?.name;
+            } else if (actionType === "ABILITY") {
+                actionName = gameContext.abilityTable[selectedAction]?.name;
+            }
+        }
+    
+        let message = `${verb} ${actionName} on ${targetName}?`;
+    
+        return message;
+    }
+
     const clearTargets = () => {
         setSelectedAction(null);
         setActionArea(null);
@@ -163,7 +225,8 @@ const GameRoute = () => {
             return;
         }
 
-        setTargets(target);
+        setTargetType(type);
+        setTargets([target]);
         if (type === "MONSTER") {
             if (actionTarget === "CHAT") {
                 return clearTargets(target);
@@ -185,6 +248,17 @@ const GameRoute = () => {
 
     const performCommand = () => {
         commandMap[actionType](selectedAction, targets);
+    }
+
+    const openInfoBox = (text, timeout) => {
+        let copy = [...infoBoxTexts];
+        copy.push({id: randomUuid(), timeout, text});
+        setInfoBoxTexts(copy);
+    }
+
+    const closeInfoBox = (event) => {
+        let filtered = infoBoxTexts.filter(({id}) => (id === event.id));
+        setInfoBoxTexts(filtered);
     }
 
     useEffect(() => {
@@ -209,6 +283,12 @@ const GameRoute = () => {
                 connect(jwt);
             }
         })();
+
+        window.addEventListener("info-box-close", closeInfoBox);
+
+        return () => {
+            window.removeEventListener("info-box-close", closeInfoBox);
+        }
     }, []);
 
     if (!playerData) {
@@ -235,10 +315,27 @@ const GameRoute = () => {
         )
     }
 
+    let helpText = null;
+    const readyToConfirm = selectedAction && targets.length > 0;
+    const readyToChooseTarget = selectedAction && (!targets || targets.length === 0);
+    if (readyToChooseTarget) {
+        helpText = "Choose a target";
+    } else if (readyToConfirm) {
+        helpText = "Confirm selection";
+    } else {
+        helpText = "Select action";
+    }
+
     return (
         <div id="page-container">
             <div id="main">
                 <div id="top-panel">
+                    <div id="top-panel-overlay">
+                        {helpText ? <InfoBox text={helpText} /> : null}
+                        {infoBoxTexts.map(({text, id, timeout}) => (
+                            <InfoBox text={text} id={id} timeout={timeout} />
+                        ))}
+                    </div>
                     <BattleBackground foreground="Grassland" background="Grassland" />
                     <Monsters 
                         monsters={dungeon?.monsters}
@@ -253,6 +350,8 @@ const GameRoute = () => {
                             player={playerData}
                             gameContext={gameContext}
                             selectedAction={selectedAction}
+                            targets={targets}
+                            confirmationText={getConfirmationText()}
                             onActionSelect={(type, action) => {
                                 if (type === null && action === null) {
                                     return clearTargets();
@@ -276,6 +375,7 @@ const GameRoute = () => {
                                     spawnMonster(arg);
                                 }
                             }}
+                            onConfirm={performCommand}
                         />
                     </div>
                     <div id="player-stats">

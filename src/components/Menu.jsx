@@ -84,7 +84,7 @@ const ItemMenu = ({items, gameContext, selectedAction, onActionSelect, onBack, o
                     <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
                     <button 
                         onClick={() => {
-                            onActionSelect("ITEM", id);
+                            onActionSelect("ITEM", gameContext.itemTable[id]);
                         }}
                         onMouseOver={() => {
                             onHover("ABILITY", {
@@ -129,7 +129,15 @@ const TestMenu = ({gameContext, onBack, onHover, onTestMenuAction}) => (
     </>
 );
 
-const Menu = ({player, gameContext, selectedAction, onActionSelect, onTestMenuAction, onHover}) => {
+const ConfirmationMenu = ({confirmationText, onConfirm, onCancel}) => (
+    <>
+        <h2 style={{color: "white", fontSize: "1.2rem", margin: "0px"}}>Confirm Action</h2>
+        <div style={{color: "white", marginLeft: "5px"}}>{confirmationText}</div>
+        <button onClick={onConfirm}>Confirm</button><button onClick={onCancel}>Cancel</button>
+    </>
+)
+
+const Menu = ({player, targets, confirmationText, gameContext, selectedAction, onActionSelect, onTestMenuAction, onHover, onConfirm}) => {
     const [menuState, setMenuState] = useState(SELECT_ACTION);
 
     const onBack = () => {
@@ -142,13 +150,30 @@ const Menu = ({player, gameContext, selectedAction, onActionSelect, onTestMenuAc
         onActionSelect(null, null);
     }
 
+    const onConfirmAction = () => {
+        setMenuState(SELECT_ACTION);
+        onActionSelect(null, null);
+        onConfirm();
+    }
+
+    const readyToConfirm = selectedAction && targets.length > 0;
+    if (readyToConfirm) {
+        return (
+            <ConfirmationMenu 
+                confirmationText={confirmationText}
+                onConfirm={onConfirmAction}
+                onCancel={onBack}
+            />
+        );
+    }
+
     switch(menuState) {
         case SELECT_ACTION:
             return <MainMenu selectedAction={selectedAction} onActionSelect={onActionSelect} onSubMenuOpen={onSubMenuOpen} />
         case SELECT_ABILITY:
             return <AbilityMenu abilities={player.abilities} selectedAction={selectedAction} onActionSelect={onActionSelect} onBack={onBack} onHover={onHover} />
         case SELECT_ITEM:
-            return <ItemMenu items={player.inventory} gameContext={gameContext} selectedAction={selectedAction} onActionSelect={onBack} onBack={() => setMenuState(SELECT_ACTION)} onHover={onHover} />
+            return <ItemMenu items={player.inventory} gameContext={gameContext} selectedAction={selectedAction} onActionSelect={onActionSelect} onBack={onBack} onHover={onHover} />
         case TEST_MENU:
             return <TestMenu gameContext={gameContext} onTestMenuAction={onTestMenuAction} onBack={onBack} onHover={onHover} />
         default:
