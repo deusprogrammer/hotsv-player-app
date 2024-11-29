@@ -61,6 +61,7 @@ const getAbilityText = (ability) => {
 const SELECT_ACTION = "START";
 const SELECT_ABILITY = "SELECT_ABILITY";
 const SELECT_ITEM = "SELECT_ITEM";
+const TEST_MENU = "TEST_MENU";
 
 const ACTION_TYPE_ATTACK = "ATTACK";
 const ACTION_TYPE_ABILITY = "ABILITY";
@@ -251,8 +252,8 @@ const GameRoute = () => {
                     </div>
                     <div>
                         <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
-                        <button onClick={() => spawnMonster('GORIYA')}>
-                            Spawn Goriya
+                        <button title="Open test menu" onClick={() => setTurnState(TEST_MENU)}>
+                            Test Menu
                         </button>
                     </div>
                 </>
@@ -332,6 +333,36 @@ const GameRoute = () => {
                                         }}
                                     >
                                         {name}
+                                    </button>
+                                </div>
+                            </>
+                    ))}
+                </>
+            );
+            break;
+        case TEST_MENU:
+            component = (
+                <>
+                    <button onClick={() => setTurnState(SELECT_ACTION)}>
+                        &lt;- Back
+                    </button>
+                    {Object.keys(gameContext?.monsterTable)
+                        .map((key) => (
+                            <>
+                                <div>
+                                    <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                                    <button 
+                                        onClick={() => {
+                                            spawnMonster(key);
+                                        }}
+                                        onMouseOver={() => {
+                                            setMonsterHover(gameContext?.monsterTable[key]);
+                                        }}
+                                        onMouseOut={() => {
+                                            setMonsterHover(null);
+                                        }}
+                                    >
+                                        Spawn {gameContext?.monsterTable[key].name}
                                     </button>
                                 </div>
                             </>
@@ -441,11 +472,11 @@ const GameRoute = () => {
                                         setTargets([key]);
                                         return;
                                     }
-                                    
-                                    setTargets([key]);
 
                                     if (actionArea === "ALL") {
-                                        setTargets([...dungeon?.monsters]);
+                                        setTargets(Object.keys(dungeon?.monsters || {}));
+                                    } else { 
+                                        setTargets([key]);
                                     }
                                 }}
                                 onMouseOver={() => {
