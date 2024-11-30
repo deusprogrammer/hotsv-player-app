@@ -200,7 +200,7 @@ button {
     width: 25px;
 }
 
-.player:hover > img, .player.selected > img {
+.player:hover > img, .player.selected > img, .player.selectable:hover ~ .player > img {
     visibility: visible;
     width: 25px;
 }

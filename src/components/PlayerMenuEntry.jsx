@@ -1,7 +1,7 @@
 import React from 'react';
 
-const PlayerMenuEntry = ({player, isSelected, onSelect}) => (
-    <div className={`player${isSelected ? ' selected' : ''}`}>
+const PlayerMenuEntry = ({player, isSelected, actionArea, onSelect}) => (
+    <div className={`player${isSelected ? ' selected' : ''}${actionArea === 'ALL' ? ' selectable' : ''}`}>
         <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
         <button onClick={onSelect}>
             {player.name}
