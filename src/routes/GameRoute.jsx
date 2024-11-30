@@ -137,7 +137,7 @@ const GameRoute = () => {
         };
 
         ws.onmessage = (message) => {
-            const { event, playerData: newPlayerData, gameContext: newGameContext, dungeon: newDungeon, messages } = JSON.parse(
+            const { event, playerData: newPlayerData, gameContext: newGameContext, dungeon: newDungeon } = JSON.parse(
                 message.data
             );
 

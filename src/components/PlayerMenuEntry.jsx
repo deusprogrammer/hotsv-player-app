@@ -7,7 +7,7 @@ const PlayerMenuEntry = ({player, isSelected, actionArea, onSelect}) => (
             {player.name}
         </button>
         <div>
-            HP: {Math.min(player.hp, player.maxHp)}/{player.maxHp} AP:{player.ap}
+            HP: {player.hp}/{player.maxHp} AP:{player.ap}
         </div>
     </div>
 );
