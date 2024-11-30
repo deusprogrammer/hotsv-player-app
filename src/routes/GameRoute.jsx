@@ -8,8 +8,7 @@ import PlayerMenuEntry from '../components/PlayerMenuEntry';
 import Menu from '../components/Menu';
 import BattleBackground from '../components/BattleBackground';
 import Monsters from '../components/Monsters';
-import InfoBox from '../components/InfoBox';
-import { randomUuid } from '../utils';
+import AnnounceBox from '../components/AnnounceBox';
 
 const config = {
     BASE_URL: 'https://deusprogrammer.com/api/twitch',
@@ -17,6 +16,8 @@ const config = {
 };
 
 const GameRoute = () => {
+    const {channelId} = useParams();
+
     const [jwt, setJwt] = useState('');
     const [infoBoxTexts, setInfoBoxTexts] = useState([]);
     const [playerData, setPlayerData] = useState(null);
@@ -25,7 +26,6 @@ const GameRoute = () => {
     const [gameContext, setGameContext] = useState({});
     const [dungeon, setDungeon] = useState(null);
     const [targets, setTargets] = useState([]);
-    const {channelId} = useParams();
 
     const [actionType, setActionType] = useState();
     const [actionArea, setActionArea] = useState();
@@ -34,6 +34,8 @@ const GameRoute = () => {
     const [selectedAction, setSelectedAction] = useState();
 
     const websocket = useRef();
+    const initialLoad = useRef();
+    const startingIndex = useRef();
 
     const commandMap = {
         ATTACK: (abilty, targets) => {
@@ -135,7 +137,6 @@ const GameRoute = () => {
         };
 
         ws.onmessage = (message) => {
-            console.log('MESSAGE: ' + message.data);
             const { event, playerData: newPlayerData, gameContext: newGameContext, dungeon: newDungeon, messages } = JSON.parse(
                 message.data
             );
@@ -143,20 +144,20 @@ const GameRoute = () => {
             switch (event) {
                 case 'JOINED':
                     if (newPlayerData) {
-                        openInfoBox(`${newPlayerData.name} joined`, 3000);
                         setPlayerData(newPlayerData);
                     }
                     if (newGameContext) {
                         setGameContext(newGameContext);
-                        console.log("GAME CONTEXT " + JSON.stringify(newGameContext, null, 5));
                     }
                     break;
                 case 'UPDATE':
-                    console.log("UPDATE MESSAGE RECEIVED");
-                    console.log("DUNGEON: " + JSON.stringify(newDungeon, null, 5));
-                    newDungeon.messages?.forEach((message) => {
-                        openInfoBox(message, 1000);
-                    });
+                    if (!initialLoad.current) {
+                        setInfoBoxTexts(newDungeon.messages.slice(startingIndex.current));
+                    } else {
+                        initialLoad.current = false;
+                        startingIndex.current = newDungeon.messages.length;
+                    }
+
                     setDungeon(newDungeon);
                     break;
                 default:
@@ -180,8 +181,6 @@ const GameRoute = () => {
         let verb = "Perform";
         let targetName = "";
         let actionName = "";
-    
-        console.log("Targets: " + JSON.stringify(targets));
     
         if (targets.length > 1) {
             if (targetType === "MONSTER") {
@@ -250,19 +249,9 @@ const GameRoute = () => {
         commandMap[actionType](selectedAction, targets);
     }
 
-    const openInfoBox = (text, timeout) => {
-        let copy = [...infoBoxTexts];
-        copy.push({id: randomUuid(), timeout, text});
-        setInfoBoxTexts(copy);
-    }
-
-    const closeInfoBox = (event) => {
-        let filtered = infoBoxTexts.filter(({id}) => (id === event.id));
-        setInfoBoxTexts(filtered);
-    }
-
     useEffect(() => {
         console.log("CHANNEL: " + channelId);
+        initialLoad.current = true;
         (async () => {
             let {
                 data: { jwt },
@@ -283,12 +272,6 @@ const GameRoute = () => {
                 connect(jwt);
             }
         })();
-
-        window.addEventListener("info-box-close", closeInfoBox);
-
-        return () => {
-            window.removeEventListener("info-box-close", closeInfoBox);
-        }
     }, []);
 
     if (!playerData) {
@@ -306,7 +289,9 @@ const GameRoute = () => {
                 <h2 style={{fontSize: "1.2rem", margin: "0px"}}>Friendlies</h2>
                 {Object.keys(dungeon?.players ?? {}).map((key) => (
                     <PlayerMenuEntry 
+                        key={key}
                         player={dungeon.players[key]}
+                        actionArea={actionArea}
                         isSelected={targets.includes(key)}
                         onSelect={() => onTargetSelect("PLAYER", key)}
                     />
@@ -315,31 +300,18 @@ const GameRoute = () => {
         )
     }
 
-    let helpText = null;
-    const readyToConfirm = selectedAction && targets.length > 0;
-    const readyToChooseTarget = selectedAction && (!targets || targets.length === 0);
-    if (readyToChooseTarget) {
-        helpText = "Choose a target";
-    } else if (readyToConfirm) {
-        helpText = "Confirm selection";
-    } else {
-        helpText = "Select action";
-    }
-
     return (
         <div id="page-container">
             <div id="main">
                 <div id="top-panel">
                     <div id="top-panel-overlay">
-                        {helpText ? <InfoBox text={helpText} /> : null}
-                        {infoBoxTexts.map(({text, id, timeout}) => (
-                            <InfoBox text={text} id={id} timeout={timeout} />
-                        ))}
+                        <AnnounceBox texts={infoBoxTexts} timeout={3000} />
                     </div>
                     <BattleBackground foreground="Grassland" background="Grassland" />
                     <Monsters 
                         monsters={dungeon?.monsters}
                         targets={targets}
+                        actionArea={actionArea}
                         onSelect={(target) => {onTargetSelect("MONSTER", target)}}
                         onHover={(target) => {setMonsterHover(target)}}
                     />

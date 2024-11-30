@@ -7,9 +7,9 @@ const getRarity = (monster) => {
     for (let i = 0; i < 10; i++) {
         let color = colors[Math.floor(i/2)];
         if (i < Math.ceil(monster.rarity/2)) {
-            rarity.push(<span style={{color, WebkitTextStrokeColor: "white", WebkitTextStrokeWidth: "1px"}}>&#9733;</span>);    
+            rarity.push(<span key={`rarity-star-${i}`} style={{color, WebkitTextStrokeColor: "white", WebkitTextStrokeWidth: "1px"}}>&#9733;</span>);    
         } else {
-            rarity.push(<span style={{color: "black", WebkitTextStrokeColor: "white", WebkitTextStrokeWidth: "1px"}}>&#9733;</span>);
+            rarity.push(<span key={`rarity-star-${i}`} style={{color: "black", WebkitTextStrokeColor: "white", WebkitTextStrokeWidth: "1px"}}>&#9733;</span>);
         }
     }
 

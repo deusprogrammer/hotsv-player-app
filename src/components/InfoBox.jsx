@@ -1,16 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
-const InfoBox = ({text, id, timeout}) => {
-    useEffect(() => {
-        if (timeout) {
-            setTimeout(() => {
-                let event = new Event("info-box-close");
-                event.id = id;
-                dispatchEvent(event);
-            }, timeout);
-        }
-    }, []);
-
+const InfoBox = ({text}) => {
     return (
         <div className="info-box">
             {text}

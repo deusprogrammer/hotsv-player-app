@@ -127,7 +127,7 @@
     opacity: 100% !important;
 }
 
-.monster:hover .enemy-arrow, .monster.selected .enemy-arrow {
+.monster:hover .enemy-arrow, .monster.selected .enemy-arrow, .monster.selectable:hover ~ .monster .enemy-arrow {
     visibility: visible;
     opacity: 100%;
     animation-name: bob-up-down;
