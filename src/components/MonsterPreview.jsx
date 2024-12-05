@@ -17,7 +17,7 @@ const getRarity = (monster) => {
 }
 
 const MonsterPreview = ({monster}) => (
-    <div style={{fontSize: "1.0rem"}}>
+    <div style={{fontSize: "1.0rem"}} className="absolute top-0 left-0 w-full h-full preview">
         <h2 style={{fontSize: "1.2rem", margin: "0px"}}>{monster.name}</h2>
         <hr />
         <div style={{fontStyle: "italic", marginLeft: "5px"}}>{monster.description}</div>

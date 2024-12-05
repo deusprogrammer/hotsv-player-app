@@ -23,3 +23,6 @@ export const createBuffMap = (target) => {
 
     return buffMap;
 };
+
+export const DEFENDER = "DEFENDER";
+export const ATTACKER = "ATTACKER";

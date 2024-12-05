@@ -1,8 +1,24 @@
-import { createBuffMap } from "../utils";
+import { useCallback } from "react";
+import { ATTACKER, createBuffMap, DEFENDER } from "../utils";
 import Gauge from "./Gauge";
 import StatPreview from "./StatPreview";
+import { useEventListener } from "../hooks/EventHooks";
 
 const PlayerPreview = ({dungeon, name}) => {
+    const onEvent = useCallback((event) => {
+        switch(event.actionType) {
+            case ATTACKER:
+                console.log(`You attacked`);
+                break;
+            case DEFENDER:
+                console.log(`You were attacked`);
+                break;
+            default:
+                break;
+        }
+    }, []);
+    useEventListener(name, onEvent);
+
     if (!dungeon) {
         return null;
     }

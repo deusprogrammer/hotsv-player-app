@@ -279,6 +279,11 @@ button {
     pointer-events: none;
 }
 
+.preview {
+    background-color: #61dafb;
+    z-index: 9999;
+}
+
 @keyframes bob-up-down {
     0% {
       transform: translateY(0);
@@ -289,4 +294,4 @@ button {
     100% {
       transform: translateY(0);
     }
-  }
+}

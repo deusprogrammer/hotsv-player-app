@@ -10,6 +10,10 @@ import Monsters from '../components/Monsters';
 import AnnounceBox from '../components/AnnounceBox';
 import PlayerMenu from '../components/PlayerMenu';
 import PlayerPreview from '../components/PlayerPreview';
+import { sendEvent, useEventListener } from '../hooks/EventHooks';
+import { useCallback } from 'react';
+import { useSpring, animated } from '@react-spring/web';
+import { DEFENDER } from '../utils';
 
 const config = {
     BASE_URL: 'https://deusprogrammer.com/api/twitch',
@@ -19,6 +23,23 @@ const config = {
 // TODO Create hooks for websockets
 
 const GameRoute = () => {
+    const [defending, defendingApi] = useSpring(() => ({
+        from: {x:0},
+        config: {duration: "100"}
+    }));
+    const onEvent = useCallback((event) => {
+        switch(event.actionType) {
+            case DEFENDER:
+                defendingApi.start({
+                    from: {x: 0},
+                    to: [{x: 10},{x:-10},{x:10},{x:-10},{x:0}]
+                });
+                break;
+            default:
+                break;
+        }
+    }, [defendingApi]);
+
     const {channelId} = useParams();
 
     const [jwt, setJwt] = useState('');
@@ -40,9 +61,12 @@ const GameRoute = () => {
     const [selectedAction, setSelectedAction] = useState();
 
     const websocket = useRef();
-    const initialLoad = useRef();
-    const startingIndex = useRef();
+    const initialLoad = useRef(true);
+    const startingMessageIndex = useRef(0);
+    const startingEventIndex = useRef(0);
     const errorsRef = useRef();
+
+    useEventListener(playerData?.name, onEvent);
 
     const commandMap = {
         ATTACK: (abilty, targets) => {
@@ -162,10 +186,16 @@ const GameRoute = () => {
                     break;
                 case 'UPDATE':
                     if (!initialLoad.current) {
-                        setInfoBoxTexts(newDungeon.messages.slice(startingIndex.current));
+                        setInfoBoxTexts(newDungeon.messages.slice(startingMessageIndex.current));
+                        newDungeon.events.slice(startingEventIndex.current).forEach((event) => {
+                            sendEvent(event.actor, event);
+                            sendEvent(event.target, event);
+                            startingEventIndex.current++;
+                        });
                     } else {
                         initialLoad.current = false;
-                        startingIndex.current = newDungeon.messages.length;
+                        startingMessageIndex.current = newDungeon.messages.length;
+                        startingEventIndex.current = newDungeon.events.length;
                     }
 
                     setDungeon(newDungeon);
@@ -265,8 +295,6 @@ const GameRoute = () => {
     }
 
     useEffect(() => {
-        console.log("CHANNEL: " + channelId);
-        initialLoad.current = true;
         errorsRef.current = [];
         (async () => {
             let {
@@ -307,27 +335,11 @@ const GameRoute = () => {
                 monster={monsterHover} 
             />
         );
-    } else {
-        playerPanel = (
-            <>
-                <PlayerPreview 
-                    dungeon={dungeon}
-                    name={playerHover || playerData?.name}
-                />
-                <PlayerMenu
-                    targets={targets}
-                    players={dungeon?.players}
-                    actionArea={actionArea}
-                    onTargetSelect={(key) => onTargetSelect("PLAYER", key)}
-                    onHover={(playerName) => setPlayerHover(playerName)}
-                />
-            </>
-        );
     }
 
     return (
         <div id="page-container">
-            <div id="main">
+            <animated.div id="main" style={{...defending}}>
                 <div id="top-panel">
                     <div id="top-panel-overlay">
                         <AnnounceBox texts={infoBoxTexts} timeout={2000} />
@@ -376,11 +388,22 @@ const GameRoute = () => {
                             onConfirm={performCommand}
                         />
                     </div>
-                    <div id="player-stats">
+                    <div id="player-stats" className="relative">
+                        <PlayerPreview 
+                            dungeon={dungeon}
+                            name={playerHover || playerData?.name}
+                        />
+                        <PlayerMenu
+                            targets={targets}
+                            players={dungeon?.players}
+                            actionArea={actionArea}
+                            onTargetSelect={(key) => onTargetSelect("PLAYER", key)}
+                            onHover={(playerName) => setPlayerHover(playerName)}
+                        />
                         {playerPanel}
                     </div>
                 </div>
-            </div>
+            </animated.div>
         </div>
     );
 };

@@ -49,7 +49,7 @@ const getAbilityText = (ability) => {
 };
 
 const AbilityPreview = ({ability}) => (
-    <div style={{fontSize: "1.0rem", margin: "0px"}}>
+    <div style={{fontSize: "1.0rem", margin: "0px"}} className="absolute top-0 left-0 w-full h-full preview">
         <h2 style={{fontSize: "1.2rem", margin: "0px"}}>{ability.name}</h2>
         <hr />
         <div style={{fontStyle: "italic", marginLeft: "5px"}}>{ability.description}</div>
