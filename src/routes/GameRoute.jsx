@@ -188,6 +188,7 @@ const GameRoute = () => {
                     if (!initialLoad.current) {
                         setInfoBoxTexts(newDungeon.messages.slice(startingMessageIndex.current));
                         newDungeon.events.slice(startingEventIndex.current).forEach((event) => {
+                            console.log("EVENT: " + JSON.stringify(event, null, 5));
                             sendEvent(event.actor, event);
                             sendEvent(event.target, event);
                             startingEventIndex.current++;
