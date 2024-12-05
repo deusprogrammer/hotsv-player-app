@@ -1,9 +1,9 @@
 import React from 'react';
 
-const PlayerMenuEntry = ({player, isSelected, actionArea, onSelect}) => (
-    <div className={`player${isSelected ? ' selected' : ''}${actionArea === 'ALL' ? ' selectable' : ''}`}>
+const PlayerMenuEntry = ({player, isSelected, onSelect, onHover}) => (
+    <div className={`flex flex-row gap-3 player${isSelected ? ' selected' : ''}`}>
         <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
-        <button onClick={onSelect}>
+        <button onClick={onSelect} onMouseOver={() => onHover(player.name)} onMouseOut={() => onHover(null)}>
             {player.name}
         </button>
         <div>

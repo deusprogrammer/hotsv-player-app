@@ -4,25 +4,31 @@ import axios from 'axios';
 import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import AbilityPreview from '../components/AbilityPreview';
 import MonsterPreview from '../components/MonsterPreview';
-import PlayerMenuEntry from '../components/PlayerMenuEntry';
 import Menu from '../components/Menu';
 import BattleBackground from '../components/BattleBackground';
 import Monsters from '../components/Monsters';
 import AnnounceBox from '../components/AnnounceBox';
+import PlayerMenu from '../components/PlayerMenu';
+import PlayerPreview from '../components/PlayerPreview';
 
 const config = {
     BASE_URL: 'https://deusprogrammer.com/api/twitch',
     WS_URL: 'ws://localhost:3002',
 };
 
+// TODO Create hooks for websockets
+
 const GameRoute = () => {
     const {channelId} = useParams();
 
     const [jwt, setJwt] = useState('');
     const [infoBoxTexts, setInfoBoxTexts] = useState([]);
+    const [errors, setErrors] = useState([]);
+
     const [playerData, setPlayerData] = useState(null);
     const [abilityHover, setAbilityHover] = useState(null);
     const [monsterHover, setMonsterHover] = useState(null);
+    const [playerHover, setPlayerHover] = useState(null);
     const [gameContext, setGameContext] = useState({});
     const [dungeon, setDungeon] = useState(null);
     const [targets, setTargets] = useState([]);
@@ -36,9 +42,17 @@ const GameRoute = () => {
     const websocket = useRef();
     const initialLoad = useRef();
     const startingIndex = useRef();
+    const errorsRef = useRef();
 
     const commandMap = {
         ATTACK: (abilty, targets) => {
+            let target;
+            if (targets.length > 1) {
+                target = null;
+            } else if (targets.length === 1 && targetType === "MONSTER") {
+                target = `~${targets[0]}`;
+            }
+
             websocket.current.send(
                 JSON.stringify({
                     event: 'ACTION',
@@ -47,19 +61,20 @@ const GameRoute = () => {
                     action: {
                         type: 'ATTACK',
                         actor: playerData.name,
-                        targets: targets.map((key) => {
-                            if (targetType === "MONSTER") {
-                                return `~${key}`;
-                            }
-
-                            return key;
-                        })
+                        targets: target
                     },
                     jwtToken: jwt
                 })
             );
         },
         ABILITY: (ability, targets) => {
+            let target;
+            if (actionArea === "ALL") {
+                target = null;
+            } else if (actionArea === "ONE" && targetType === "MONSTER") {
+                target = `~${targets[0]}`;
+            }
+
             websocket.current.send(
                 JSON.stringify({
                     event: 'ACTION',
@@ -68,13 +83,7 @@ const GameRoute = () => {
                     action: {
                         type: 'USE',
                         actor: playerData.name,
-                        targets: targets.map((key) => {
-                            if (targetType === "MONSTER") {
-                                return `~${key}`;
-                            }
-
-                            return key;
-                        }),
+                        targets: target,
                         argument: ability,
                     },
                     jwtToken: jwt
@@ -82,6 +91,13 @@ const GameRoute = () => {
             );
         },
         ITEM: (item, targets) => {
+            let target;
+            if (actionArea === "ALL") {
+                target = null;
+            } else if (actionArea === "ONE" && targetType === "MONSTER") {
+                target = `~${targets[0]}`;
+            }
+
             websocket.current.send(
                 JSON.stringify({
                     event: 'ACTION',
@@ -90,14 +106,8 @@ const GameRoute = () => {
                     action: {
                         type: 'USE',
                         actor: playerData.name,
-                        targets: targets.map((key) => {
-                            if (targetType === "MONSTER") {
-                                return `~${key}`;
-                            }
-
-                            return key;
-                        }),
-                        argument: item,
+                        targets: target,
+                        argument: `#${item}`,
                     },
                     jwtToken: jwt
                 })
@@ -137,7 +147,7 @@ const GameRoute = () => {
         };
 
         ws.onmessage = (message) => {
-            const { event, playerData: newPlayerData, gameContext: newGameContext, dungeon: newDungeon } = JSON.parse(
+            const { event, playerData: newPlayerData, gameContext: newGameContext, error, dungeon: newDungeon } = JSON.parse(
                 message.data
             );
 
@@ -159,6 +169,11 @@ const GameRoute = () => {
                     }
 
                     setDungeon(newDungeon);
+                    break;
+                case 'ERROR':
+                    console.error("ERROR: " + error);
+                    errorsRef.current.push(error);
+                    setErrors([...errorsRef.current]);
                     break;
                 default:
                     break;
@@ -252,6 +267,7 @@ const GameRoute = () => {
     useEffect(() => {
         console.log("CHANNEL: " + channelId);
         initialLoad.current = true;
+        errorsRef.current = [];
         (async () => {
             let {
                 data: { jwt },
@@ -280,24 +296,33 @@ const GameRoute = () => {
 
     let playerPanel;
     if (abilityHover) {
-        playerPanel = <AbilityPreview ability={abilityHover} />;
+        playerPanel = (
+            <AbilityPreview 
+                ability={abilityHover} 
+            />
+        );
     } else if (monsterHover) {
-        playerPanel = <MonsterPreview monster={monsterHover} />;
+        playerPanel = (
+            <MonsterPreview 
+                monster={monsterHover} 
+            />
+        );
     } else {
         playerPanel = (
-            <div style={{fontSize: "1.0rem"}}>
-                <h2 style={{fontSize: "1.2rem", margin: "0px"}}>Friendlies</h2>
-                {Object.keys(dungeon?.players ?? {}).map((key) => (
-                    <PlayerMenuEntry 
-                        key={key}
-                        player={dungeon.players[key]}
-                        actionArea={actionArea}
-                        isSelected={targets.includes(key)}
-                        onSelect={() => onTargetSelect("PLAYER", key)}
-                    />
-                ))}
-            </div>
-        )
+            <>
+                <PlayerPreview 
+                    dungeon={dungeon}
+                    name={playerHover || playerData?.name}
+                />
+                <PlayerMenu
+                    targets={targets}
+                    players={dungeon?.players}
+                    actionArea={actionArea}
+                    onTargetSelect={(key) => onTargetSelect("PLAYER", key)}
+                    onHover={(playerName) => setPlayerHover(playerName)}
+                />
+            </>
+        );
     }
 
     return (
@@ -305,7 +330,8 @@ const GameRoute = () => {
             <div id="main">
                 <div id="top-panel">
                     <div id="top-panel-overlay">
-                        <AnnounceBox texts={infoBoxTexts} timeout={3000} />
+                        <AnnounceBox texts={infoBoxTexts} timeout={2000} />
+                        <AnnounceBox texts={errors} timeout={3000} />
                     </div>
                     <BattleBackground foreground="Grassland" background="Grassland" />
                     <Monsters 

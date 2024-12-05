@@ -2,7 +2,7 @@ import React from 'react';
 import Monster from './Monster';
 
 const Monsters = ({monsters, targets, actionArea, onSelect, onHover}) => (
-    <div id="monsters">
+    <div id="monsters" className={`${actionArea === 'ALL' ? 'all' : ''}`}>
         {Object.keys(monsters ?? {}).map((key) => (
             <Monster
                 key={key}

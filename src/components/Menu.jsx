@@ -51,7 +51,7 @@ const AbilityMenu = ({abilities, selectedAction, onActionSelect, onBack, onHover
             &lt;- Back
         </button>
         {Object.keys(abilities).map((key) => (
-            <div className={`ability${selectedAction === key ? ' selected' : ''}`}>
+            <div key={key} className={`ability${selectedAction === key ? ' selected' : ''}`}>
                 <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
                 <button
                     title={abilities[key].description}
@@ -80,7 +80,7 @@ const ItemMenu = ({items, gameContext, selectedAction, onActionSelect, onBack, o
         {items
             .filter(({ type }) => type === 'consumable')
             .map(({ id, name, use, description }) => (
-                <div className={`ability${selectedAction === id ? ' selected' : ''}`}>
+                <div key={id} className={`ability${selectedAction === id ? ' selected' : ''}`}>
                     <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
                     <button 
                         onClick={() => {
@@ -111,20 +111,18 @@ const TestMenu = ({gameContext, onBack, onHover, onTestMenuAction}) => (
         </button>
         {Object.keys(gameContext?.monsterTable)
             .map((key) => (
-                <>
-                    <div>
-                        <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
-                        <button 
-                            onClick={() => {
-                                onTestMenuAction("SPAWN", key);
-                            }}
-                            onMouseOver={() => onHover("MONSTER", gameContext?.monsterTable[key])}
-                            onMouseOut={() => onHover("MONSTER", null)}
-                        >
-                            Spawn {gameContext?.monsterTable[key].name}
-                        </button>
-                    </div>
-                </>
+                <div key={key}>
+                    <img alt="finger" src={`${process.env.PUBLIC_URL}/finger.png`} />
+                    <button 
+                        onClick={() => {
+                            onTestMenuAction("SPAWN", key);
+                        }}
+                        onMouseOver={() => onHover("MONSTER", gameContext?.monsterTable[key])}
+                        onMouseOut={() => onHover("MONSTER", null)}
+                    >
+                        Spawn {gameContext?.monsterTable[key].name}
+                    </button>
+                </div>
         ))}
     </>
 );

@@ -1,8 +1,8 @@
 import React from 'react';
 
-const Monster = ({monster, monsterKey, actionArea, isSelected, onSelect, onHover}) => (
+const Monster = ({monster, monsterKey, isSelected, onSelect, onHover}) => (
     <button 
-        className={`monster${isSelected ? ' selected' : ''}${actionArea === 'ALL' ? ' selectable' : ''}`} 
+        className={`flex flex-col items-center justify-center monster${isSelected ? ' selected' : ''}`} 
         onClick={() => onSelect(monsterKey)}
         onMouseOver={() => {
             onHover(monster);
